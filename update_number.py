@@ -22,9 +22,9 @@ def git_commit():
     # Stage the changes
     subprocess.run(['git', 'add', 'number.txt'])
 
-    # Create commit with current date
-    date = datetime.now().strftime('%Y-%m-%d')
-    commit_message = f"Update number: {date}"
+    # Create commit with current date and time
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+    commit_message = f"Update number: {timestamp}"
     subprocess.run(['git', 'commit', '-m', commit_message])
 
 
@@ -38,13 +38,16 @@ def git_push():
         print(result.stderr)
 
 
-def update_cron_with_random_time():
-    # Generate random hour (0-23) and minute (0-59)
-    random_hour = random.randint(0, 23)
-    random_minute = random.randint(0, 59)
-
-    # Define the new cron job command
-    new_cron_command = f"{random_minute} {random_hour} * * * cd {script_dir} && python3 {os.path.join(script_dir, 'update_number.py')}\n"
+def update_cron_with_random_times():
+    # Generate 5 random times throughout the day
+    random_times = []
+    for _ in range(5):
+        random_hour = random.randint(0, 23)
+        random_minute = random.randint(0, 59)
+        random_times.append((random_hour, random_minute))
+    
+    # Sort times to avoid conflicts
+    random_times.sort()
 
     # Get the current crontab
     cron_file = "/tmp/current_cron"
@@ -56,17 +59,21 @@ def update_cron_with_random_time():
 
     with open(cron_file, "w") as file:
         for line in lines:
-            # Remove existing entry for `update_number.py` if it exists
+            # Remove existing entries for `update_number.py` if they exist
             if "update_number.py" not in line:
                 file.write(line)
-        # Add the new cron job at the random time
-        file.write(new_cron_command)
+        
+        # Add 5 new cron jobs at random times
+        for hour, minute in random_times:
+            new_cron_command = f"{minute} {hour} * * * cd {script_dir} && python3 {os.path.join(script_dir, 'update_number.py')}\n"
+            file.write(new_cron_command)
 
     # Load the updated crontab
     os.system(f"crontab {cron_file}")
     os.remove(cron_file)
 
-    print(f"Cron job updated to run at {random_hour}:{random_minute} tomorrow.")
+    times_str = ", ".join([f"{h:02d}:{m:02d}" for h, m in random_times])
+    print(f"Cron jobs updated to run 5 times tomorrow at: {times_str}")
 
 def main():
     try:
@@ -77,7 +84,7 @@ def main():
         git_commit()
         git_push()
 
-        update_cron_with_random_time()
+        update_cron_with_random_times()
 
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -85,4 +92,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
