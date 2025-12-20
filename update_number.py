@@ -39,9 +39,10 @@ def git_push():
 
 
 def update_cron_with_random_times():
-    # Generate 5 random times throughout the day
+    # Generate random number of times (1-10) throughout the day
+    num_times = random.randint(1, 10)
     random_times = []
-    for _ in range(5):
+    for _ in range(num_times):
         random_hour = random.randint(0, 23)
         random_minute = random.randint(0, 59)
         random_times.append((random_hour, random_minute))
@@ -63,7 +64,7 @@ def update_cron_with_random_times():
             if "update_number.py" not in line:
                 file.write(line)
         
-        # Add 5 new cron jobs at random times
+        # Add new cron jobs at random times (1-10 times per day)
         for hour, minute in random_times:
             new_cron_command = f"{minute} {hour} * * * cd {script_dir} && python3 {os.path.join(script_dir, 'update_number.py')}\n"
             file.write(new_cron_command)
@@ -73,7 +74,7 @@ def update_cron_with_random_times():
     os.remove(cron_file)
 
     times_str = ", ".join([f"{h:02d}:{m:02d}" for h, m in random_times])
-    print(f"Cron jobs updated to run 5 times tomorrow at: {times_str}")
+    print(f"Cron jobs updated to run {num_times} times tomorrow at: {times_str}")
 
 def main():
     try:

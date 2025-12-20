@@ -1,0 +1,36 @@
+name: Daily Streak Bot
+
+on:
+  schedule:
+    # This runs at 04:00, 12:00, and 20:00 UTC (3 times a day)
+    - cron: '0 4,12,20 * * *'
+  workflow_dispatch: # This adds a "Run Workflow" button for manual testing
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Random Delay
+        # Waits between 1 second and 1 hour so commits aren't robotic
+        run: sleep $(( (RANDOM % 3600) ))s
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run Update Script
+        run: python update_number_github.py
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "iamsorenl@gmail.com"
+          git config --local user.name "iamsorenl"
+          git add number.txt
+          git commit -m "Daily update: $(date)"
+          git push
