@@ -2,35 +2,53 @@ name: Daily Streak Bot
 
 on:
   schedule:
-    # This runs at 04:00, 12:00, and 20:00 UTC (3 times a day)
-    - cron: '0 4,12,20 * * *'
-  workflow_dispatch: # This adds a "Run Workflow" button for manual testing
+    # once per day at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   update-repo:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Random Delay
-        # Waits between 1 second and 1 hour so commits aren't robotic
-        run: sleep $(( (RANDOM % 3600) ))s
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Run Update Script
-        run: python update_number_github.py
-
-      - name: Commit and Push
+      - name: Configure Git
         run: |
           git config --local user.email "iamsorenl@gmail.com"
           git config --local user.name "iamsorenl"
-          git add number.txt
-          git commit -m "Daily update: $(date)"
+
+      - name: Random number of updates (1-20)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          N=$(( (RANDOM % 20) + 1 ))
+          echo "Doing $N updates today."
+
+          for i in $(seq 1 "$N"); do
+            # random delay 1..900 seconds (up to 15 min)
+            # keeps worst-case runtime under ~5 hours for N=20
+            delay=$(( (RANDOM % 900) + 1 ))
+            echo "Update $i/$N: sleeping $delay seconds..."
+            sleep "$delay"
+
+            python update_number_github.py
+
+            git add number.txt
+            if git diff --staged --quiet; then
+              echo "No changes to commit for update $i/$N"
+            else
+              git commit -m "Daily update $i/$N: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            fi
+          done
+
           git push
