@@ -51,4 +51,5 @@ jobs:
             fi
           done
 
+          git pull --rebase
           git push

@@ -29,6 +29,13 @@ def git_commit():
 
 
 def git_push():
+    # Pull latest changes first to avoid conflicts
+    pull_result = subprocess.run(['git', 'pull', '--rebase'], capture_output=True, text=True)
+    if pull_result.returncode != 0:
+        print("Error pulling from GitHub:")
+        print(pull_result.stderr)
+        return
+    
     # Push the committed changes to GitHub
     result = subprocess.run(['git', 'push'], capture_output=True, text=True)
     if result.returncode == 0:
